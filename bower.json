@@ -1,0 +1,29 @@
+{
+  "name": "angular-auth",
+  "authors": [
+    "Willian Krause <krause.willian@gmail.com>"
+  ],
+  "description": "Authentication plugin for AngularJS projects",
+  "main": "auth.js",
+  "keywords": [
+    "auth",
+    "authentication",
+    "angular",
+    "angularjs"
+  ],
+  "license": "Apache",
+  "homepage": "https://github.com/willcrisis/angular-auth",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "angular": "^1.5.5",
+    "angular-ui-router": "ui-router#^0.3.0",
+    "a0-angular-storage": "^0.0.15",
+    "angular-route": "^1.5.5"
+  }
+}
