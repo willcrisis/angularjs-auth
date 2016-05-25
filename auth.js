@@ -1,20 +1,21 @@
 'use strict';
-(function () {
+(function() {
   angular.module('willcrisis.angular-auth', ['ngRoute', 'ui.router', 'angular-storage'])
   .provider('authConf', [function () {
     var options = {
       loginState: 'login',
-      successState: 'dashboard',
       endpointUrl: '',
       logoutEndpointUrl: null,
+      usernameProperty: 'username',
+      tokenProperty: 'access_token',
+      rolesProperty: 'roles',
+      refreshTokenProperty: 'refresh_token',
+      tokenTypeProperty: 'token_type',
       functionIfDenied: function(toState) {
         $state.go(options.loginState);
       },
       setLoginState: function (state) {
         options.loginState = state;
-      },
-      setSuccessState: function(state) {
-        options.successState = state;
       },
       setEndpointUrl: function (url) {
         options.endpointUrl = url;
@@ -24,6 +25,21 @@
       },
       setLogoutEndpointUrl: function(logoutEndpointUrl) {
         options.logoutEndpointUrl = logoutEndpointUrl;
+      },
+      setUsernameProperty: function(property) {
+          options.usernameProperty = property;
+      },
+      setTokenProperty: function(property) {
+          options.tokenProperty = property;
+      },
+      setRolesProperty: function(property) {
+          options.rolesProperty = property;
+      },
+      setRefreshTokenProperty: function(property) {
+          options.refreshTokenProperty = property;
+      },
+      setTokenTypeProperty: function(property) {
+          options.tokenTypeProperty = property;
       }
     };
 
@@ -128,12 +144,22 @@
     };
 
     function setData(service, response) {
-      service.username = response.username;
-      service.token = response['access_token'];
-      service.roles = response.roles;
-      service.refreshToken = response['refresh_token'];
-      service.tokenType = response['token_type'];
-      service.loggedIn = !!response['access_token'];
+      service.username = response[authConf.usernameProperty];
+      service.token = response[authConf.tokenProperty];
+      service.roles = response[authConf.rolesProperty];
+      service.refreshToken = response[authConf.refreshTokenProperty];
+      service.tokenType = response[authConf.tokenTypeProperty];
+      service.loggedIn = !!response[tokenProperty];
+    }
+  }])
+  .directive('authUsername', ['auth', function (auth) {
+    var ngIf = ngIfDirective[0];
+    return {
+      restrict: 'E',
+      template: '{{username}}',
+      controller: ['$scope', 'auth', function($scope, auth) {
+          $scope.username = auth.username;
+      }]
     }
   }])
   .directive('authHasRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
