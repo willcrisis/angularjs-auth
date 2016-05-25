@@ -149,7 +149,7 @@
       service.roles = response[authConf.rolesProperty];
       service.refreshToken = response[authConf.refreshTokenProperty];
       service.tokenType = response[authConf.tokenTypeProperty];
-      service.loggedIn = !!response[tokenProperty];
+      service.loggedIn = !!response[authConf.tokenProperty];
     }
   }])
   .directive('authUsername', ['auth', function (auth) {
