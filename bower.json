@@ -22,8 +22,8 @@
   ],
   "dependencies": {
     "angular": "^1.5.5",
+    "angular-route": "^1.5.5",
     "angular-ui-router": "ui-router#^0.3.0",
-    "a0-angular-storage": "^0.0.15",
-    "angular-route": "^1.5.5"
+    "a0-angular-storage": "^0.0.15"
   }
 }
