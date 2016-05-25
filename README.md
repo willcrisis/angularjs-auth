@@ -37,15 +37,15 @@ angular.module('myModule').config(function(authConf) {
 });
 ```
 
-`setEndpointUrl(url)`(required): Sets the server login URL. Ex.: http://localhost:8080/login
-`setLogoutEndpointUrl(url)`(optional, default: null): If you need logout the user on server side, set the logout endpoint here. If you're not using server-side logout, just ignore this option.
-`setLoginState(stateName)`(optional, default: 'login'): After creating the login state using angular-ui-router, set the state name here.
-`setUsernameProperty(usernamePropertyName)`(optional, default: 'username'): Property name that contains username on login HTTP response.
-`setTokenProperty(tokenPropertyName)`(optional, default: 'access_token'): Property name that contains access token on login HTTP response.
-`setRolesProperty(rolesPropertyName)`(optional, default: 'roles'): Property name that contains user roles on login HTTP response.
-`setRefreshTokenProperty(refreshTokenPropertyName)`(optional, default: 'refresh_token'): Property name that contains the refresh token on login HTTP response.
-`setTokenTypeProperty(tokenTypePropertyName)`(optional, default: 'token_type'): Property name that contains token type on login HTTP response.
-`setFunctionIfDenied(function(toState){})`(optional, default: redirect to login page): Function to execute if user can't access the destination state.
+`setEndpointUrl(url)`(required): Sets the server login URL. Ex.: http://localhost:8080/login   
+`setLogoutEndpointUrl(url)`(optional, default: null): If you need logout the user on server side, set the logout endpoint here. If you're not using server-side logout, just ignore this option.   
+`setLoginState(stateName)`(optional, default: 'login'): After creating the login state using angular-ui-router, set the state name here.   
+`setUsernameProperty(usernamePropertyName)`(optional, default: 'username'): Property name that contains username on login HTTP response.   
+`setTokenProperty(tokenPropertyName)`(optional, default: 'access_token'): Property name that contains access token on login HTTP response.   
+`setRolesProperty(rolesPropertyName)`(optional, default: 'roles'): Property name that contains user roles on login HTTP response.   
+`setRefreshTokenProperty(refreshTokenPropertyName)`(optional, default: 'refresh_token'): Property name that contains the refresh token on login HTTP response.   
+`setTokenTypeProperty(tokenTypePropertyName)`(optional, default: 'token_type'): Property name that contains token type on login HTTP response.   
+`setFunctionIfDenied(function(toState){})`(optional, default: redirect to login page): Function to execute if user can't access the destination state.   
 
 ## Securing your states
 
@@ -98,19 +98,19 @@ angular.module('myModule').controller('LoginController', function($scope, auth) 
 
 `auth` service contains following properties and functions:
 
-`auth.username`(String): Returns logged in user's username.
-`auth.roles`(Array): Returns logged in user's roles.
-`auth.token`(String): Returns logged in user's token.
-`auth.refreshToken`(String): Returns logged in user's refresh token.
-`auth.tokenType`(String): Returns logged in user's token type
-`auth.loggedIn`(boolean): Returns true if the user is logged in, otherwise returns false.
-`auth.broadcast()`: Broadcasts the login change state. It will fire 'stateChange' event.
-`auth.login(username, password)`: Fires a POST HTTP request to the `endpointUrl` URL. Callback contains the logged in user.
-`auth.logout()`: Logs out the current logged in user. If `logoutEndpointUrl` is defined, fires a GET HTTP request to the URL.
-`auth.hasRole(roleName)`: Returns true if logged in user has the desired role, otherwise returns false.
-`auth.hasAllRoles(roleArray)`: Returns true if the logged in user has all the desired roles, otherwise returns false.
-`auth.hasAnyRole(roleArray)`: Returns true if the logged in user has any of the desired roles, otherwise returns false.
-`auth.canAccess(state)`: Returns true if logged in user can access the desired state, otherwise returns false.
+`auth.username`(String): Returns logged in user's username.   
+`auth.roles`(Array): Returns logged in user's roles.   
+`auth.token`(String): Returns logged in user's token.   
+`auth.refreshToken`(String): Returns logged in user's refresh token.   
+`auth.tokenType`(String): Returns logged in user's token type.   
+`auth.loggedIn`(boolean): Returns true if the user is logged in, otherwise returns false.   
+`auth.broadcast()`: Broadcasts the login change state. It will fire 'stateChange' event.   
+`auth.login(username, password)`: Fires a POST HTTP request to the `endpointUrl` URL. Callback contains the logged in user.   
+`auth.logout()`: Logs out the current logged in user. If `logoutEndpointUrl` is defined, fires a GET HTTP request to the URL.   
+`auth.hasRole(roleName)`: Returns true if logged in user has the desired role, otherwise returns false.   
+`auth.hasAllRoles(roleArray)`: Returns true if the logged in user has all the desired roles, otherwise returns false.   
+`auth.hasAnyRole(roleArray)`: Returns true if the logged in user has any of the desired roles, otherwise returns false.   
+`auth.canAccess(state)`: Returns true if logged in user can access the desired state, otherwise returns false.   
 
 This is a default RESPONSE returned by a server-side Grails app after firing the login request to `endpointUrl`:
 
