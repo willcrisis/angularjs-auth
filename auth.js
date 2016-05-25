@@ -153,11 +153,10 @@
     }
   }])
   .directive('authUsername', ['auth', function (auth) {
-    var ngIf = ngIfDirective[0];
     return {
       restrict: 'E',
       template: '{{username}}',
-      controller: ['$scope', 'auth', function($scope, auth) {
+      controller: ['$scope', function($scope) {
           $scope.username = auth.username;
       }]
     }
