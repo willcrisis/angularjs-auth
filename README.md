@@ -140,6 +140,24 @@ Writes the current logged in username.
 <div class="myDivClass"><auth-username></auth-username></div>
 ```
 
+### auth-logged-in
+
+Only prints the content if user is logged in.
+
+```
+<auth-logged-in>I will be visible only to logged in users.</auth-logged-in>
+<div auth-logged-in>Me too.</div>
+```
+
+### auth-not-logged-in
+
+Only prints the content if user is logged in.
+
+```
+<auth-not-logged-in>I will be visible only to not logged in users.</auth-not-logged-in>
+<div auth-not-logged-in>Me too.</div>
+```
+
 ### auth-has-role
 
 Only prints the content if logged in user has the desired role.
@@ -154,7 +172,7 @@ Only prints the content if logged in user has the desired role.
 Only prints the content if logged in user has any of the desired roles. The roles list must be comma-separated.
 
 ```
-<auth-has-any-role role="ROLE_CUSTOM,ROLE_CUSTOM_2">I will be visible only to users that has ROLE_CUSTOM or ROLE_CUSTOM_2 roles.</auth-has-role>
+<auth-has-any-role role="ROLE_CUSTOM,ROLE_CUSTOM_2">I will be visible only to users that has ROLE_CUSTOM or ROLE_CUSTOM_2 roles.</auth-has-any-role>
 <div auth-has-any-role="ROLE_CUSTOM,ROLE_CUSTOM_2">Me too.</div>
 ```
 
@@ -163,7 +181,7 @@ Only prints the content if logged in user has any of the desired roles. The role
 Only prints the content if logged in user has all of the desired roles. The roles list must be comma-separated.
 
 ```
-<auth-has-all-roles role="ROLE_CUSTOM,ROLE_CUSTOM_2">I will be visible only to users that has ROLE_CUSTOM and ROLE_CUSTOM_2 roles.</auth-has-role>
+<auth-has-all-roles role="ROLE_CUSTOM,ROLE_CUSTOM_2">I will be visible only to users that has ROLE_CUSTOM and ROLE_CUSTOM_2 roles.</auth-has-all-roles>
 <div auth-has-all-roles="ROLE_CUSTOM,ROLE_CUSTOM_2">Me too.</div>
 ```
 

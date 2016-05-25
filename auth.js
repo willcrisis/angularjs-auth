@@ -162,6 +162,36 @@
       }]
     }
   }])
+  .directive('authLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+    var ngIf = ngIfDirective[0];
+    return {
+      restrict: 'AE',
+      transclude: ngIf.transclude,
+      priority: ngIf.priority - 1,
+      terminal: ngIf.terminal,
+      link: function (scope, element, attrs) {
+        attrs.ngIf = function() {
+          return auth.loggedIn;
+        };
+        ngIf.link.apply(ngIf, arguments);
+      }
+    }
+  }])
+  .directive('authNotLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+    var ngIf = ngIfDirective[0];
+    return {
+      restrict: 'AE',
+      transclude: ngIf.transclude,
+      priority: ngIf.priority - 1,
+      terminal: ngIf.terminal,
+      link: function (scope, element, attrs) {
+        attrs.ngIf = function() {
+          return !auth.loggedIn;
+        };
+        ngIf.link.apply(ngIf, arguments);
+      }
+    }
+  }])
   .directive('authHasRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
     var ngIf = ngIfDirective[0];
     return {
