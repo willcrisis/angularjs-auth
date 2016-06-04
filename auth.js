@@ -264,7 +264,7 @@
       }
     }
   }])
-  .run(['$rootScope', '$state', 'auth', 'authConf', function($rootScope, $state, auth, authConf) {
+  .run(['$rootScope', '$state', 'auth', 'authConf', 'store', function($rootScope, $state, auth, authConf, store) {
     $rootScope.$on('$stateChangeStart', function (event, toState) {
       if (!auth.canAccess(toState)) {
         event.preventDefault();
