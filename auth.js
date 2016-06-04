@@ -14,6 +14,9 @@
       functionIfDenied: function(toState) {
         $state.go(options.loginState);
       },
+      functionIfAuthenticated: function(data) {
+
+      },
       setLoginState: function (state) {
         options.loginState = state;
       },
@@ -40,6 +43,9 @@
       },
       setTokenTypeProperty: function(property) {
           options.tokenTypeProperty = property;
+      },
+      setFunctionIfAuthenticated: function(functionIfAuthenticated) {
+          options.functionIfAuthenticated = functionIfAuthenticated;
       }
     };
 
@@ -83,6 +89,7 @@
     this.authenticate = function (data) {
       setData(service, data);
       $http.defaults.headers.common.Authorization = (this.tokenType + " " + this.token).trim();
+      authConf.functionIfAuthenticated(data);
       store.set('auth', data);
     };
 
@@ -264,5 +271,10 @@
         authConf.functionIfDenied(toState);
       }
     });
+
+    var response = store.get('auth') || {};
+    if (response) {
+      auth.authenticate(response);
+    }
   }]);
 })();

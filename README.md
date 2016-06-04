@@ -34,6 +34,9 @@ angular.module('myModule').config(function(authConf) {
   authConf.setFunctionIfDenied(function(toState) {
     //what to do if user can't access this state
   });
+  authConf.setFunctionIfAuthenticated(function(responseData) {
+    //what to do if user is successfully authenticated
+  });
 });
 ```
 
@@ -46,6 +49,7 @@ angular.module('myModule').config(function(authConf) {
 `setRefreshTokenProperty(refreshTokenPropertyName)`(optional, default: 'refresh_token'): Property name that contains the refresh token on login HTTP response.   
 `setTokenTypeProperty(tokenTypePropertyName)`(optional, default: 'token_type'): Property name that contains token type on login HTTP response.   
 `setFunctionIfDenied(function(toState){})`(optional, default: redirect to login page): Function to execute if user can't access the destination state.   
+`setFunctionIfAuthenticated(function(responseData){})`(optional, default: do nothing): Function to execute if user is successfully authenticated. The server response data are passed as a parameter to the function. Use this if you want, for example, set custom HTTP headers further than user's token.   
 
 ## Securing your states
 
