@@ -54,6 +54,26 @@
         $rootScope.$broadcast('userChange');
       };
 
+      this.registerUser = function (email, password) {
+        return Promise.race([
+          service.firebaseAuth.createUserWithEmailAndPassword(email, password).catch(function (error) {
+            handleError(error)
+          })
+        ]);
+      };
+
+      this.loginWithEmailPassword = function (email, password) {
+        return Promise.race([
+          service.firebaseAuth.signInWithEmailAndPassword(email, password).then(function(result) {
+            result.user = result;
+            service.authenticate(result);
+            return service;
+          }).catch(function (error) {
+            handleError(error);
+          })
+        ]);
+      };
+
       this.loginWithGoogle = function () {
         return loginWithProvider(getProviderForProviderId('google.com'));
       };
@@ -134,10 +154,10 @@
 
           service.firebaseAuth.fetchProvidersForEmail(email).then(function (providers) {
             var provider = getProviderForProviderId(providers[0]);
-            service.firebaseAuth.signInWithPopup(provider).then(function(result) {
-              result.user.link(pendingCred).then(function() {
+            service.firebaseAuth.signInWithPopup(provider).then(function (result) {
+              result.user.link(pendingCred).then(function () {
                 service.authenticate(result);
-                return new Promise(function(resolve, reject) {
+                return new Promise(function (resolve, reject) {
                   resolve();
                 });
               });
