@@ -26,30 +26,38 @@ angular.module('myModule').config(function(authConf) {
   authConf.setEndpointUrl('http://myServer/myLoginEndpoint');
   authConf.setLogoutEndpointUrl(http://myServer/myLogoutEndpoint);
   authConf.setLoginState('myLoginState');
+  authConf.setUsernameFormProperty('username');
+  authConf.setPasswordFormProperty('password');
   authConf.setUsernameProperty('username');
   authConf.setTokenProperty('token');
   authConf.setRolesProperty('roles');
   authConf.setRefreshTokenProperty('refresh_token');
   authConf.setTokenTypeProperty('token_type');
-  authConf.setFunctionIfDenied(function(toState) {
+  authConf.setFunctionIfDenied(function(stateService, toState) {
     //what to do if user can't access this state
   });
-  authConf.setFunctionIfAuthenticated(function(responseData) {
+  authConf.setFunctionIfAuthenticated(function(authService, responseData) {
     //what to do if user is successfully authenticated
   });
+  authConf.setFunctionIfLoggedOff(function() {
+      //what to do if user is successfully logged off
+    });
 });
 ```
 
 `setEndpointUrl(url)`(required): Sets the server login URL. Ex.: http://localhost:8080/login   
 `setLogoutEndpointUrl(url)`(optional, default: null): If you need logout the user on server side, set the logout endpoint here. If you're not using server-side logout, just ignore this option.   
 `setLoginState(stateName)`(optional, default: 'login'): After creating the login state using angular-ui-router, set the state name here.   
-`setUsernameProperty(usernamePropertyName)`(optional, default: 'username'): Property name that contains username on login HTTP response.   
-`setTokenProperty(tokenPropertyName)`(optional, default: 'access_token'): Property name that contains access token on login HTTP response.   
+`setUsernameFormProperty(usernameFormPropertyName)`(optional, default: 'username'): Property name that will be set in HTTP request containing username value.
+`setPasswordFormProperty(passwordFormPropertyName)`(optional, default: 'password'): Property name that will be set in HTTP request containing password value.
+`setUsernameProperty(usernamePropertyName)`(optional, default: 'username'): Property name that contains username on login HTTP response.
+`setTokenProperty(tokenPropertyName)`(optional, default: 'access_token'): Property name that contains access token on login HTTP response.
 `setRolesProperty(rolesPropertyName)`(optional, default: 'roles'): Property name that contains user roles on login HTTP response.   
 `setRefreshTokenProperty(refreshTokenPropertyName)`(optional, default: 'refresh_token'): Property name that contains the refresh token on login HTTP response.   
 `setTokenTypeProperty(tokenTypePropertyName)`(optional, default: 'token_type'): Property name that contains token type on login HTTP response.   
-`setFunctionIfDenied(function(toState){})`(optional, default: redirect to login page): Function to execute if user can't access the destination state.   
-`setFunctionIfAuthenticated(function(responseData){})`(optional, default: do nothing): Function to execute if user is successfully authenticated. The server response data are passed as a parameter to the function. Use this if you want, for example, set custom HTTP headers further than user's token.   
+`setFunctionIfDenied(function(stateService, toState){})`(optional, default: redirect to login page): Function to execute if user can't access the destination state. The $state service is passed as a param, so you can use it even on .config() block of your module.
+`setFunctionIfAuthenticated(function(authService, responseData){})`(optional, default: do nothing): Function to execute if user is successfully authenticated. The auth service and server response data are passed as parameters to the function. Use this if you want, for example, set custom HTTP headers further than user's token.
+`setFunctionIfLoggedOff(function(){})`(optional, default: do nothing): Function to execute if user is successfully logged off. Use this if you want, for example, clear custom HTTP headers further than user's token.
 
 ## Securing your states
 
@@ -77,7 +85,7 @@ When using `auth: true`, angular-auth wil only allow logged in users to access t
 
 #### auth: false
 
-When using `auth: false`, angular-auth wil only allow logged out users to access the state. No logged in users will be able to access.
+When using `auth: false`, angular-auth wil not allow logged in users to access the state.
 
 #### auth: ['ROLE_ARRAY']
 
@@ -108,15 +116,17 @@ angular.module('myModule').controller('LoginController', function($scope, auth) 
 `auth.refreshToken`(String): Returns logged in user's refresh token.   
 `auth.tokenType`(String): Returns logged in user's token type.   
 `auth.loggedIn`(boolean): Returns true if the user is logged in, otherwise returns false.   
-`auth.broadcast()`: Broadcasts the login change state. It will fire 'stateChange' event.   
+`auth.customProperties`(object): Allows defining custom data to this service. Use this to store user's name, for example.'
+`auth.broadcast()`: Broadcasts the login change state. It will fire 'stateChange' event.
 `auth.login(username, password)`: Fires a POST HTTP request to the `endpointUrl` URL. Callback contains the logged in user.   
 `auth.logout()`: Logs out the current logged in user. If `logoutEndpointUrl` is defined, fires a GET HTTP request to the URL.   
 `auth.hasRole(roleName)`: Returns true if logged in user has the desired role, otherwise returns false.   
 `auth.hasAllRoles(roleArray)`: Returns true if the logged in user has all the desired roles, otherwise returns false.   
 `auth.hasAnyRole(roleArray)`: Returns true if the logged in user has any of the desired roles, otherwise returns false.   
 `auth.canAccess(state)`: Returns true if logged in user can access the desired state, otherwise returns false.   
+`auth.addCustomProperty(propertyName, propertyValue)`: Adds a custom property to this service. Access this property using `auth.customProperties['propertyName']` service object or `<auth-custom-property property="propertyName">` directive.
 
-This is a default RESPONSE returned by a server-side Grails app after firing the login request to `endpointUrl`:
+This is an example of a valid default RESPONSE returned by a server-side Grails app after firing the login request to `endpointUrl` and is valid for this module:
 
 ```
 {
@@ -142,6 +152,15 @@ Writes the current logged in username.
 
 ```
 <div class="myDivClass"><auth-username></auth-username></div>
+```
+
+### auth-custom-property
+
+Writes the desired custom property.
+
+```
+<div class="myDivClass"><auth-custom-property property="myProperty"></auth-custom-property></div>
+<div class="myDivClass" auth-custom-property="myProperty"></div>
 ```
 
 ### auth-logged-in
