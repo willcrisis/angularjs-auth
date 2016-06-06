@@ -22,27 +22,34 @@ angular.module('myModule', ['willcrisis.angular-auth']);
 This plugin has some configuration that you can customize using `authConf` provider:
 
 ```
-angular.module('myModule').config(function(authConf) {
-  authConf.setEndpointUrl('http://myServer/myLoginEndpoint');
-  authConf.setLogoutEndpointUrl(http://myServer/myLogoutEndpoint);
-  authConf.setLoginState('myLoginState');
-  authConf.setUsernameFormProperty('username');
-  authConf.setPasswordFormProperty('password');
-  authConf.setUsernameProperty('username');
-  authConf.setTokenProperty('token');
-  authConf.setRolesProperty('roles');
-  authConf.setRefreshTokenProperty('refresh_token');
-  authConf.setTokenTypeProperty('token_type');
-  authConf.setFunctionIfDenied(function(stateService, toState) {
+angular.module('myModule').config(function(authConfProvider) {
+  authConfProvider.setEndpointUrl('http://myServer/myLoginEndpoint');
+  authConfProvider.setLogoutEndpointUrl(http://myServer/myLogoutEndpoint);
+  authConfProvider.setLoginState('myLoginState');
+  authConfProvider.setUsernameFormProperty('username');
+  authConfProvider.setPasswordFormProperty('password');
+  authConfProvider.setUsernameProperty('username');
+  authConfProvider.setTokenProperty('token');
+  authConfProvider.setRolesProperty('roles');
+  authConfProvider.setRefreshTokenProperty('refresh_token');
+  authConfProvider.setTokenTypeProperty('token_type');
+  authConfProvider.setFunctionIfDenied(function(stateService, toState) {
     //what to do if user can't access this state
   });
-  authConf.setFunctionIfAuthenticated(function(authService, responseData) {
+  authConfProvider.setFunctionIfAuthenticated(function(authService, responseData) {
     //what to do if user is successfully authenticated
   });
-  authConf.setFunctionIfLoggedOff(function() {
-      //what to do if user is successfully logged off
-    });
+  authConfProvider.setFunctionIfLoggedOff(function() {
+    //what to do if user is successfully logged off
+  });
 });
+
+//if you need to use some services that can't be accessed in .config() phase, you can use .run():
+angular.module('myModule').run(function(myService, authConf) {
+  authConf.setFunctionIfLoggedOff(function() {
+    myService.doSomething();
+  );
+}
 ```
 
 `setEndpointUrl(url)`(required): Sets the server login URL. Ex.: http://localhost:8080/login   
