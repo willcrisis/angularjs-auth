@@ -4,8 +4,8 @@
     .provider('authConf', [function () {
       var options = {
         loginState: 'login',
-        functionIfDenied: function (toState) {
-          $state.go(options.loginState);
+        functionIfDenied: function (stateService, toState) {
+          stateService.go(options.loginState);
         },
         functionIfAuthenticated: function (data) {
 
@@ -242,7 +242,7 @@
       $rootScope.$on('$stateChangeStart', function (event, toState) {
         if (!auth.canAccess(toState)) {
           event.preventDefault();
-          authConf.functionIfDenied(toState);
+          authConf.functionIfDenied($state, toState);
         }
       });
 
