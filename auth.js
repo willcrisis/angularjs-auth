@@ -13,6 +13,7 @@
         functionIfLoggedOff: function () {
 
         },
+        rolesSupport: false,
         setLoginState: function (state) {
           options.loginState = state;
         },
@@ -24,6 +25,9 @@
         },
         setFunctionIfLoggedOff: function (functionIfLoggedOff) {
           options.functionIfLoggedOff = functionIfLoggedOff;
+        },
+        setRolesSupport: function(rolesSupport) {
+          options.rolesSupport = rolesSupport;
         }
       };
 
@@ -47,6 +51,7 @@
       this.token = null;
       this.refreshToken = null;
       this.loggedIn = false;
+      this.roles = null;
 
       var service = this;
 
@@ -112,12 +117,50 @@
         ]);
       };
 
+      this.hasRole = function (role) {
+        if (!this.roles) {
+          return false;
+        }
+        return this.roles.indexOf(role) > -1;
+      };
+
+      this.hasAllRoles = function (roles) {
+        if (!this.roles) {
+          return false;
+        }
+        for (var i = 0; i < roles.length; i++) {
+          if (!this.hasRole(roles[i])) {
+            return false;
+          }
+        }
+        return true;
+      };
+
+      this.hasAnyRole = function (roles) {
+        if (!this.roles) {
+          return false;
+        }
+        for (var i = 0; i < roles.length; i++) {
+          if (this.hasRole(roles[i])) {
+            return true;
+          }
+        }
+        return false;
+      };
+
       this.canAccess = function (state) {
         if (!state || state.auth === undefined) {
           return true;
         } else if (state.auth.constructor == Array) {
-          console.log('Implementar lógica');
-          return true;
+          if (authConf.rolesSupport) {
+            if (state.requireAll) {
+              return this.hasAllRoles(state.auth);
+            } else {
+              return this.hasAnyRole(state.auth);
+            }
+          } else {
+            return true;
+          }
         } else {
           return state.auth === this.loggedIn
         }
@@ -233,6 +276,72 @@
         link: function (scope, element, attrs) {
           attrs.ngIf = function () {
             return !auth.loggedIn;
+          };
+          ngIf.link.apply(ngIf, arguments);
+        }
+      }
+    }])
+    .directive('authHasRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+      var ngIf = ngIfDirective[0];
+      return {
+        restrict: 'AE',
+        transclude: ngIf.transclude,
+        priority: ngIf.priority - 1,
+        terminal: ngIf.terminal,
+        scope: {
+          role: '@'
+        },
+        link: function (scope, element, attrs) {
+          var value = scope.role || attrs.authHasRole;
+          if (!value) {
+            throw new Error('auth-has-role: A Role is required');
+          }
+          attrs.ngIf = function () {
+            return auth.hasRole(value);
+          };
+          ngIf.link.apply(ngIf, arguments);
+        }
+      }
+    }])
+    .directive('authHasAnyRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+      var ngIf = ngIfDirective[0];
+      return {
+        restrict: 'AE',
+        transclude: ngIf.transclude,
+        priority: ngIf.priority - 1,
+        terminal: ngIf.terminal,
+        scope: {
+          roles: '@'
+        },
+        link: function (scope, element, attrs) {
+          var value = scope.roles ? scope.roles.split(',') : attrs.authHasAnyRole ? attrs.authHasAnyRole.split(',') : null;
+          if (!value) {
+            throw new Error('auth-has-any-role: At least one Role is required');
+          }
+          attrs.ngIf = function () {
+            return auth.hasAnyRole(value);
+          };
+          ngIf.link.apply(ngIf, arguments);
+        }
+      }
+    }])
+    .directive('authHasAllRoles', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+      var ngIf = ngIfDirective[0];
+      return {
+        restrict: 'AE',
+        transclude: ngIf.transclude,
+        priority: ngIf.priority - 1,
+        terminal: ngIf.terminal,
+        scope: {
+          roles: '@'
+        },
+        link: function (scope, element, attrs) {
+          var value = scope.roles ? scope.roles.split(',') : attrs.authHasAllRoles ? attrs.authHasAllRoles.split(',') : null;
+          if (!value) {
+            throw new Error('auth-has-all-roles: At least one Role is required');
+          }
+          attrs.ngIf = function () {
+            return auth.hasAllRoles(value);
           };
           ngIf.link.apply(ngIf, arguments);
         }
