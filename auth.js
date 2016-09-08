@@ -347,11 +347,31 @@
         }
       }
     }])
-    .run(['$rootScope', '$state', 'auth', 'authConf', 'store', function ($rootScope, $state, auth, authConf, store) {
+    .config(['$stateProvider', function($stateProvider) {
+      $stateProvider.decorator('parent', function (internalStateObj, parentFn) {
+        internalStateObj.self.$$state = function() { return internalStateObj; };
+        return parentFn(internalStateObj);
+      });
+    }])
+    .run(['$rootScope', '$state', 'auth', 'authConf', 'store', '$location', function ($rootScope, $state, auth, authConf, store, $location) {
       $rootScope.$on('$stateChangeStart', function (event, toState) {
         if (!auth.canAccess(toState)) {
           event.preventDefault();
           authConf.functionIfDenied($state, toState);
+        }
+      });
+      $rootScope.$on('$locationChangeStart', function (event) {
+        var found;
+        angular.forEach($state.get(), function(state) {
+          var privatePortion = state.$$state();
+          var match = privatePortion.url.exec($location.path(), $location.search());
+          if (match) {
+            found = state;
+          }
+        });
+        if (!found || !auth.canAccess(found)) {
+          event.preventDefault();
+          authConf.functionIfDenied($state, found);
         }
       });
 
