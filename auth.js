@@ -61,7 +61,9 @@
 
       this.registerUser = function (email, password) {
         return Promise.race([
-          service.firebaseAuth.createUserWithEmailAndPassword(email, password).catch(function (error) {
+          service.firebaseAuth.createUserWithEmailAndPassword(email, password).then(function(result) {
+            return result;
+          }).catch(function (error) {
             handleError(error)
           })
         ]);
