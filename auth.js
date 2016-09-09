@@ -28,6 +28,9 @@
         },
         setRolesSupport: function(rolesSupport) {
           options.rolesSupport = rolesSupport;
+        },
+        setAuthenticateAfterRegister: function(authenticateAfterRegister) {
+          options.authenticateAfterRegister = authenticateAfterRegister;
         }
       };
 
@@ -62,6 +65,10 @@
       this.registerUser = function (email, password) {
         return Promise.race([
           service.firebaseAuth.createUserWithEmailAndPassword(email, password).then(function(result) {
+            if (authConf.authenticateAfterRegister) {
+              result.user = result;
+              service.authenticate(result);
+            }
             return result;
           }).catch(function (error) {
             handleError(error)
