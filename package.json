@@ -1,0 +1,29 @@
+{
+  "name": "angularjs-auth",
+  "version": "0.0.8",
+  "description": "An authentication plugin for AngularJS apps",
+  "main": "auth.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/willcrisis/angularjs-auth.git"
+  },
+  "keywords": [
+    "angularjs",
+    "auth",
+    "authentication"
+  ],
+  "author": "Willian Krause <krause.willian@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/willcrisis/angular-auth/issues"
+  },
+  "homepage": "https://github.com/willcrisis/angular-auth#readme",
+  "dependencies": {
+    "@uirouter/angularjs": "^1.0.3",
+    "angular": "^1.5.5",
+    "angular-storage": "0.0.15"
+  }
+}

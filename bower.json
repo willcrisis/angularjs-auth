@@ -1,5 +1,6 @@
 {
-  "name": "angular-auth",
+  "name": "angularjs-auth",
+  "version": "0.0.8",
   "authors": [
     "Willian Krause <krause.willian@gmail.com>"
   ],
@@ -8,11 +9,10 @@
   "keywords": [
     "auth",
     "authentication",
-    "angular",
     "angularjs"
   ],
   "license": "Apache",
-  "homepage": "https://github.com/willcrisis/angular-auth",
+  "homepage": "https://github.com/willcrisis/angularjs-auth",
   "ignore": [
     "**/.*",
     "node_modules",
