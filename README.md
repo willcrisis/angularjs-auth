@@ -17,7 +17,7 @@ npm install angularjs-auth --save
 
 Bower:
 ```
-bower install willcrisis/angular-auth --save
+bower install willcrisis-angularjs-auth --save
 ```
 
 After installing, add a reference to this module to your app.js:
