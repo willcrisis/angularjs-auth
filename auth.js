@@ -1,8 +1,10 @@
 'use strict';
 (function () {
-  angular.module('willcrisis.angular-auth', ['ngRoute', 'ui.router', 'angular-storage'])
+  angular.module('willcrisis.angularjs-auth', ['ngRoute', 'ui.router', 'angular-storage'])
     .provider('authConf', [function () {
-      var options = {
+      var service = this;
+
+      var defaultEndpoint = {
         loginState: 'login',
         endpointUrl: '',
         logoutEndpointUrl: null,
@@ -13,64 +15,29 @@
         rolesProperty: 'roles',
         refreshTokenProperty: 'refresh_token',
         tokenTypeProperty: 'token_type',
-        functionIfDenied: function (stateService, toState) {
-          stateService.go(options.loginState);
+        functionIfDenied: function (stateService, toState, authConf, authService) {
+          stateService.go(authConf[authService.endpoint].loginState);
         },
         functionIfAuthenticated: function (service, data) {
 
         },
         functionIfLoggedOff: function () {
 
-        },
-        setLoginState: function (state) {
-          options.loginState = state;
-        },
-        setEndpointUrl: function (url) {
-          options.endpointUrl = url;
-        },
-        setFunctionIfDenied: function (functionIfDenied) {
-          options.functionIfDenied = functionIfDenied;
-        },
-        setLogoutEndpointUrl: function (logoutEndpointUrl) {
-          options.logoutEndpointUrl = logoutEndpointUrl;
-        },
-        setUsernameFormProperty: function (property) {
-          options.usernameFormProperty = property;
-        },
-        setPasswordFormProperty: function (property) {
-          options.passwordFormProperty = property;
-        },
-        setUsernameProperty: function (property) {
-          options.usernameProperty = property;
-        },
-        setTokenProperty: function (property) {
-          options.tokenProperty = property;
-        },
-        setRolesProperty: function (property) {
-          options.rolesProperty = property;
-        },
-        setRefreshTokenProperty: function (property) {
-          options.refreshTokenProperty = property;
-        },
-        setTokenTypeProperty: function (property) {
-          options.tokenTypeProperty = property;
-        },
-        setFunctionIfAuthenticated: function (functionIfAuthenticated) {
-          options.functionIfAuthenticated = functionIfAuthenticated;
-        },
-        setFunctionIfLoggedOff: function (functionIfLoggedOff) {
-          options.functionIfLoggedOff = functionIfLoggedOff;
         }
       };
 
-      angular.extend(this, options);
+      service.default = angular.copy(defaultEndpoint);
 
-      this.$get = [function () {
-        if (!options) {
-          throw new Error('Could not load configs.');
-        }
-        return options;
+      service.$get = [function () {
+        return service;
       }];
+
+      this.addEndpoint = function(endpointName, props) {
+        service[endpointName] = angular.copy(defaultEndpoint);
+        if (props) {
+          angular.extend(service[endpointName], props);
+        }
+      }
     }])
     .service('auth', ['$rootScope', 'store', '$http', 'authConf', function ($rootScope, store, $http, authConf) {
       this.username = null;
@@ -80,6 +47,7 @@
       this.tokenType = null;
       this.customProperties = {};
       this.loggedIn = false;
+      this.endpoint = 'default';
 
       var service = this;
 
@@ -87,12 +55,20 @@
         $rootScope.$broadcast('userChange');
       };
 
-      this.login = function (username, password) {
+      this.setEndpoint = function (endpoint) {
+        service.endpoint = endpoint;
+      };
+
+      this.login = function (username, password, endpoint) {
+        if (!endpoint) {
+          endpoint = 'default';
+        }
+        service.endpoint = endpoint;
         var data = {};
-        data[authConf.usernameFormProperty] = username;
-        data[authConf.passwordFormProperty] = password;
+        data[authConf[service.endpoint].usernameFormProperty] = username;
+        data[authConf[service.endpoint].passwordFormProperty] = password;
         return Promise.race([
-          $http.post(authConf.endpointUrl, data)
+          $http.post(authConf[service.endpoint].endpointUrl, data)
             .then(
               function (result) {
                 service.authenticate(result.data);
@@ -108,8 +84,9 @@
 
       this.authenticate = function (data) {
         setData(data);
+        data.endpoint = service.endpoint;
         $http.defaults.headers.common.Authorization = ((this.tokenType || '') + " " + this.token).trim();
-        authConf.functionIfAuthenticated(service, data);
+        authConf[service.endpoint].functionIfAuthenticated(service, data);
         store.set('auth', data);
       };
 
@@ -118,8 +95,8 @@
         service.customProperties = {};
         $http.defaults.headers.common.Authorization = null;
         store.remove('auth');
-        authConf.functionIfLoggedOff();
-        if (authConf.logoutEndpointUrl) {
+        authConf[service.endpoint].functionIfLoggedOff();
+        if (authConf[service.endpoint].logoutEndpointUrl) {
           return $http.get(authConf.logoutEndpointUrl);
         }
       };
@@ -177,12 +154,16 @@
       };
 
       function setData(response) {
-        service.username = getPropertyValue(authConf.usernameProperty, response);
-        service.token = getPropertyValue(authConf.tokenProperty, response);
-        service.roles = getPropertyValue(authConf.rolesProperty, response);
-        service.refreshToken = getPropertyValue(authConf.refreshTokenProperty, response);
-        service.tokenType = getPropertyValue(authConf.tokenTypeProperty, response);
+        service.username = getPropertyValue(authConf[service.endpoint].usernameProperty, response);
+        service.token = getPropertyValue(authConf[service.endpoint].tokenProperty, response);
+        service.roles = getPropertyValue(authConf[service.endpoint].rolesProperty, response);
+        service.refreshToken = getPropertyValue(authConf[service.endpoint].refreshTokenProperty, response);
+        service.tokenType = getPropertyValue(authConf[service.endpoint].tokenTypeProperty, response);
         service.loggedIn = !!service.token;
+
+        if (response.endpoint) {
+          service.endpoint = response.endpoint;
+        }
       }
 
       function getPropertyValue(property, response) {
@@ -319,7 +300,7 @@
       $rootScope.$on('$stateChangeStart', function (event, toState) {
         if (!auth.canAccess(toState)) {
           event.preventDefault();
-          authConf.functionIfDenied($state, toState);
+          authConf[auth.endpoint].functionIfDenied($state, toState, authConf, auth);
         }
       });
 
