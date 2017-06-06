@@ -1,6 +1,6 @@
 {
   "name": "angularjs-auth",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "An authentication plugin for AngularJS apps",
   "main": "auth.js",
   "scripts": {

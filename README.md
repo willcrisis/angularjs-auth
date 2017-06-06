@@ -42,6 +42,7 @@ angular.module('myModule').config(function(authConfProvider) {
   authConfProvider.default.rolesProperty = 'roles';
   authConfProvider.default.refreshTokenProperty = 'refresh_token';
   authConfProvider.default.tokenTypeProperty = 'token_type';
+  authConfProvider.default.adminRole: 'ROLE_ADMIN';
   authConfProvider.default.functionIfDenied = function(stateService, toState) {
     //what to do if user can't access this state
   };
@@ -90,6 +91,9 @@ Property name that contains the refresh token on login HTTP response.
 
 ### tokenTypeProperty (optional, default: 'token_type')
 Property name that contains token type on login HTTP response. Ex. `'Bearer'`, etc.
+
+### adminRole (optional, default: 'ROLE_ADMIN')
+Name of the role that identify an admin user. If a user contains this role, it will have full access to all states.
    
 ### functionIfDenied(stateService, toState, authConf, authService) (optional, default: redirect to login page) 
 Function to execute if user can't access the destination state. The $state service is passed as a param, so you can use it even on .config() block of your module.
@@ -130,7 +134,7 @@ When using `auth: false`, angularjs-auth will not allow logged in users to acces
 
 #### auth: ['ROLE_ARRAY']
 
-When using `auth: ['ROLE_ARRAY']`, angularjs-auth will only allow logged in users that has any of the roles defined in array. If you want to allow access only to users that have all the specified roles, you must set `requireAll` property to true.
+When using `auth: ['ROLE_ARRAY']`, angularjs-auth will only allow logged in users that has any of the roles defined in array, except if it has the `adminRole`. In that case, it will have full access to all states. If you want to allow access only to users that have all the specified roles, you must set `requireAll` property to true.
 
 ## Logging in your users
 
@@ -191,8 +195,12 @@ Returns true if the logged in user has all the desired roles, otherwise returns 
 #### auth.hasAnyRole(roleArray)
 Returns true if the logged in user has any of the desired roles, otherwise returns false.   
 
+#### auth.hasAdminRole()
+Returns true if the logged in user has the `adminRole`, otherwise returns false.
+
 #### auth.canAccess(state)
 Returns true if logged in user can access the desired state, otherwise returns false.   
+
 #### auth.addCustomProperty(propertyName, propertyValue)
 Adds a custom property to this service. Access this property using `auth.customProperties['propertyName']` service object or `<auth-custom-property property="propertyName">` directive.
 
@@ -226,6 +234,7 @@ angular.module('myModule').config(function(authConfProvider) {
     passwordFormProperty: 'password',
     tokenProperty: 'token',
     usernameProperty: 'username',
+	adminRole: 'administration',
     functionIfAuthenticated: function (authService, data) {
       console.log('user is authenticated in another endpoint');
     }
@@ -317,6 +326,15 @@ Only prints the content if logged in user has all of the desired roles. The role
 ```
 <auth-has-all-roles role="ROLE_CUSTOM,ROLE_CUSTOM_2">I will be visible only to users that has ROLE_CUSTOM and ROLE_CUSTOM_2 roles.</auth-has-all-roles>
 <div auth-has-all-roles="ROLE_CUSTOM,ROLE_CUSTOM_2">Me too.</div>
+```
+
+### auth-has-admin-role
+
+Only prints the content if logged in user has the admin role.
+
+```
+<auth-has-admin-role>I will be visible only to users that has administration privileges.</auth-has-admin-role>
+<div auth-has-admin-role>Me too.</div>
 ```
 
 ## Contributing

@@ -15,6 +15,7 @@
         rolesProperty: 'roles',
         refreshTokenProperty: 'refresh_token',
         tokenTypeProperty: 'token_type',
+        adminRole: 'ROLE_ADMIN',
         functionIfDenied: function (stateService, toState, authConf, authService) {
           stateService.go(authConf[authService.endpoint].loginState);
         },
@@ -40,26 +41,26 @@
       }
     }])
     .service('auth', ['$rootScope', 'store', '$http', 'authConf', function ($rootScope, store, $http, authConf) {
-      this.username = null;
-      this.roles = null;
-      this.token = null;
-      this.refreshToken = null;
-      this.tokenType = null;
-      this.customProperties = {};
-      this.loggedIn = false;
-      this.endpoint = 'default';
-
       var service = this;
 
-      this.broadcast = function () {
+      service.username = null;
+      service.roles = null;
+      service.token = null;
+      service.refreshToken = null;
+      service.tokenType = null;
+      service.customProperties = {};
+      service.loggedIn = false;
+      service.endpoint = 'default';
+
+      service.broadcast = function () {
         $rootScope.$broadcast('userChange');
       };
 
-      this.setEndpoint = function (endpoint) {
+      service.setEndpoint = function (endpoint) {
         service.endpoint = endpoint;
       };
 
-      this.login = function (username, password, endpoint) {
+      service.login = function (username, password, endpoint) {
         if (!endpoint) {
           endpoint = 'default';
         }
@@ -82,7 +83,7 @@
         ]);
       };
 
-      this.authenticate = function (data) {
+      service.authenticate = function (data) {
         setData(data);
         data.endpoint = service.endpoint;
         $http.defaults.headers.common.Authorization = ((this.tokenType || '') + " " + this.token).trim();
@@ -90,7 +91,7 @@
         store.set('auth', data);
       };
 
-      this.logout = function () {
+      service.logout = function () {
         setData({});
         service.customProperties = {};
         $http.defaults.headers.common.Authorization = null;
@@ -101,38 +102,38 @@
         }
       };
 
-      this.hasRole = function (role) {
-        if (!this.roles) {
+      service.hasRole = function (role) {
+        if (!service.roles) {
           return false;
         }
-        return this.roles.indexOf(role) > -1;
+        return service.roles.indexOf(role) > -1;
       };
 
-      this.hasAllRoles = function (roles) {
-        if (!this.roles) {
+      service.hasAllRoles = function (roles) {
+        if (!service.roles) {
           return false;
         }
         for (var i = 0; i < roles.length; i++) {
-          if (!this.hasRole(roles[i])) {
+          if (!service.hasRole(roles[i])) {
             return false;
           }
         }
         return true;
       };
 
-      this.hasAnyRole = function (roles) {
-        if (!this.roles) {
+      service.hasAnyRole = function (roles) {
+        if (!service.roles) {
           return false;
         }
         for (var i = 0; i < roles.length; i++) {
-          if (this.hasRole(roles[i])) {
+          if (service.hasRole(roles[i])) {
             return true;
           }
         }
         return false;
       };
 
-      this.canAccess = function (state) {
+      service.canAccess = function (state) {
         if (!state) {
           return true;
         }
@@ -140,30 +141,37 @@
           return true;
         } else if (state.auth.constructor == Array) {
           if (state.requireAll) {
-            return this.hasAllRoles(state.auth);
+            return service.hasAdminRole() || service.hasAllRoles(state.auth);
           } else {
-            return this.hasAnyRole(state.auth);
+            return service.hasAdminRole() || service.hasAnyRole(state.auth);
           }
         } else {
           return state.auth === this.loggedIn
         }
       };
 
-      this.addCustomProperty = function (name, value) {
+      service.hasAdminRole = function() {
+        if (!service.roles) {
+          return false;
+        }
+        return service.hasRole(authConf[service.endpoint].adminRole);
+      };
+
+      service.addCustomProperty = function (name, value) {
         service.customProperties[name] = value;
       };
 
       function setData(response) {
+        if (response.endpoint) {
+          service.endpoint = response.endpoint;
+        }
+
         service.username = getPropertyValue(authConf[service.endpoint].usernameProperty, response);
         service.token = getPropertyValue(authConf[service.endpoint].tokenProperty, response);
         service.roles = getPropertyValue(authConf[service.endpoint].rolesProperty, response);
         service.refreshToken = getPropertyValue(authConf[service.endpoint].refreshTokenProperty, response);
         service.tokenType = getPropertyValue(authConf[service.endpoint].tokenTypeProperty, response);
         service.loggedIn = !!service.token;
-
-        if (response.endpoint) {
-          service.endpoint = response.endpoint;
-        }
       }
 
       function getPropertyValue(property, response) {
@@ -174,6 +182,8 @@
         });
         return propertyValue;
       }
+
+      return service;
     }])
     .directive('authUsername', ['auth', function (auth) {
       return {
@@ -246,7 +256,23 @@
             throw new Error('auth-has-role: A Role is required');
           }
           attrs.ngIf = function () {
-            return auth.hasRole(value);
+            return auth.hasAdminRole() || auth.hasRole(value);
+          };
+          ngIf.link.apply(ngIf, arguments);
+        }
+      }
+    }])
+    .directive('authHasAdminRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+      var ngIf = ngIfDirective[0];
+      return {
+        restrict: 'AE',
+        transclude: ngIf.transclude,
+        priority: ngIf.priority - 1,
+        terminal: ngIf.terminal,
+        scope: {},
+        link: function (scope, element, attrs) {
+          attrs.ngIf = function () {
+            return auth.hasAdminRole();
           };
           ngIf.link.apply(ngIf, arguments);
         }
@@ -268,7 +294,7 @@
             throw new Error('auth-has-any-role: At least one Role is required');
           }
           attrs.ngIf = function () {
-            return auth.hasAnyRole(value);
+            return auth.hasAdminRole() || auth.hasAnyRole(value);
           };
           ngIf.link.apply(ngIf, arguments);
         }
@@ -290,7 +316,7 @@
             throw new Error('auth-has-all-roles: At least one Role is required');
           }
           attrs.ngIf = function () {
-            return auth.hasAllRoles(value);
+            return auth.hasAdminRole() || auth.hasAllRoles(value);
           };
           ngIf.link.apply(ngIf, arguments);
         }
