@@ -1,338 +1,346 @@
 'use strict';
 (function () {
-  angular.module('willcrisis.angularjs-auth', ['ngRoute', 'ui.router', 'angular-storage'])
-    .provider('authConf', [function () {
-      var service = this;
+    angular.module('willcrisis.angular-auth', ['ngRoute', 'ui.router', 'angular-storage'])
+        .provider('authConf', [function () {
+            var options = {
+                loginState: 'login',
+                endpointUrl: '',
+                logoutEndpointUrl: null,
+                usernameFormProperty: 'username',
+                passwordFormProperty: 'password',
+                customFormProperty: [],
+                usernameProperty: 'username',
+                tokenProperty: 'access_token',
+                rolesProperty: 'roles',
+                refreshTokenProperty: 'refresh_token',
+                tokenTypeProperty: 'token_type',
+                functionIfDenied: function (stateService, toState) {
+                    stateService.go(options.loginState);
+                },
+                functionIfAuthenticated: function (service, data) {
 
-      var defaultEndpoint = {
-        loginState: 'login',
-        endpointUrl: '',
-        logoutEndpointUrl: null,
-        usernameFormProperty: 'username',
-        passwordFormProperty: 'password',
-        usernameProperty: 'username',
-        tokenProperty: 'access_token',
-        rolesProperty: 'roles',
-        refreshTokenProperty: 'refresh_token',
-        tokenTypeProperty: 'token_type',
-        adminRole: 'ROLE_ADMIN',
-        functionIfDenied: function (stateService, toState, authConf, authService) {
-          stateService.go(authConf[authService.endpoint].loginState);
-        },
-        functionIfAuthenticated: function (service, data) {
+                },
+                functionIfLoggedOff: function () {
 
-        },
-        functionIfLoggedOff: function () {
+                },
+                setLoginState: function (state) {
+                    options.loginState = state;
+                },
+                setEndpointUrl: function (url) {
+                    options.endpointUrl = url;
+                },
+                setFunctionIfDenied: function (functionIfDenied) {
+                    options.functionIfDenied = functionIfDenied;
+                },
+                setLogoutEndpointUrl: function (logoutEndpointUrl) {
+                    options.logoutEndpointUrl = logoutEndpointUrl;
+                },
+                setUsernameFormProperty: function (property) {
+                    options.usernameFormProperty = property;
+                },
+                setPasswordFormProperty: function (property) {
+                    options.passwordFormProperty = property;
+                },
+                setUsernameProperty: function (property) {
+                    options.usernameProperty = property;
+                },
+                setTokenProperty: function (property) {
+                    options.tokenProperty = property;
+                },
+                setRolesProperty: function (property) {
+                    options.rolesProperty = property;
+                },
+                setRefreshTokenProperty: function (property) {
+                    options.refreshTokenProperty = property;
+                },
+                setTokenTypeProperty: function (property) {
+                    options.tokenTypeProperty = property;
+                },
+                setFunctionIfAuthenticated: function (functionIfAuthenticated) {
+                    options.functionIfAuthenticated = functionIfAuthenticated;
+                },
+                setFunctionIfLoggedOff: function (functionIfLoggedOff) {
+                    options.functionIfLoggedOff = functionIfLoggedOff;
+                },
+                addCustomProperty: function (property) {
+                    options.customFormProperty.push(property);
+                }
+            };
 
-        }
-      };
+            angular.extend(this, options);
 
-      service.default = angular.copy(defaultEndpoint);
+            this.$get = [function () {
+                if (!options) {
+                    throw new Error('Could not load configs.');
+                }
+                return options;
+            }];
+        }])
+        .service('auth', ['$rootScope', 'store', '$http', 'authConf', function ($rootScope, store, $http, authConf) {
+            this.username = null;
+            this.roles = null;
+            this.token = null;
+            this.refreshToken = null;
+            this.tokenType = null;
+            this.customProperties = {};
+            this.loggedIn = false;
 
-      service.$get = [function () {
-        return service;
-      }];
+            var service = this;
 
-      this.addEndpoint = function(endpointName, props) {
-        service[endpointName] = angular.copy(defaultEndpoint);
-        if (props) {
-          angular.extend(service[endpointName], props);
-        }
-      }
-    }])
-    .service('auth', ['$rootScope', 'store', '$http', 'authConf', function ($rootScope, store, $http, authConf) {
-      var service = this;
+            this.broadcast = function () {
+                $rootScope.$broadcast('userChange');
+            };
 
-      service.username = null;
-      service.roles = null;
-      service.token = null;
-      service.refreshToken = null;
-      service.tokenType = null;
-      service.customProperties = {};
-      service.loggedIn = false;
-      service.endpoint = 'default';
+            this.login = function (username, password, custom) {
+                var data = {};
+                data[authConf.usernameFormProperty] = username;
+                data[authConf.passwordFormProperty] = password;
 
-      service.broadcast = function () {
-        $rootScope.$broadcast('userChange');
-      };
+                if (authConf.customFormProperty.length > 0) {
 
-      service.setEndpoint = function (endpoint) {
-        service.endpoint = endpoint;
-      };
+                    for (var i in authConf.customFormProperty) {
 
-      service.login = function (username, password, endpoint) {
-        if (!endpoint) {
-          endpoint = 'default';
-        }
-        service.endpoint = endpoint;
-        var data = {};
-        data[authConf[service.endpoint].usernameFormProperty] = username;
-        data[authConf[service.endpoint].passwordFormProperty] = password;
-        return Promise.race([
-          $http.post(authConf[service.endpoint].endpointUrl, data)
-            .then(
-              function (result) {
-                service.authenticate(result.data);
-                service.broadcast();
-                return service;
-              },
-              function (error) {
-                throw error;
-              }
-            )
-        ]);
-      };
+                        data[authConf.customFormProperty[i]] = custom[authConf.customFormProperty[i]];
 
-      service.authenticate = function (data) {
-        setData(data);
-        data.endpoint = service.endpoint;
-        $http.defaults.headers.common.Authorization = ((this.tokenType || '') + " " + this.token).trim();
-        authConf[service.endpoint].functionIfAuthenticated(service, data);
-        store.set('auth', data);
-      };
+                    }
 
-      service.logout = function () {
-        setData({});
-        service.customProperties = {};
-        $http.defaults.headers.common.Authorization = null;
-        store.remove('auth');
-        authConf[service.endpoint].functionIfLoggedOff();
-        if (authConf[service.endpoint].logoutEndpointUrl) {
-          return $http.get(authConf.logoutEndpointUrl);
-        }
-      };
+                }
 
-      service.hasRole = function (role) {
-        if (!service.roles) {
-          return false;
-        }
-        return service.roles.indexOf(role) > -1;
-      };
+                return Promise.race([
+                    $http.post(authConf.endpointUrl, data)
+                        .then(
+                            function (result) {
+                                service.authenticate(result.data);
+                                service.broadcast();
+                                return service;
+                            },
+                            function (error) {
+                                throw error;
+                            }
+                        )
+                ]);
+            };
 
-      service.hasAllRoles = function (roles) {
-        if (!service.roles) {
-          return false;
-        }
-        for (var i = 0; i < roles.length; i++) {
-          if (!service.hasRole(roles[i])) {
-            return false;
-          }
-        }
-        return true;
-      };
+            this.authenticate = function (data) {
+                setData(data);
+                $http.defaults.headers.common.Authorization = ((this.tokenType || '') + " " + this.token).trim();
+                authConf.functionIfAuthenticated(service, data);
+                store.set('auth', data);
+            };
 
-      service.hasAnyRole = function (roles) {
-        if (!service.roles) {
-          return false;
-        }
-        for (var i = 0; i < roles.length; i++) {
-          if (service.hasRole(roles[i])) {
-            return true;
-          }
-        }
-        return false;
-      };
+            this.logout = function () {
+                setData({});
+                service.customProperties = {};
+                $http.defaults.headers.common.Authorization = null;
+                store.remove('auth');
+                authConf.functionIfLoggedOff();
+                if (authConf.logoutEndpointUrl) {
+                    return $http.get(authConf.logoutEndpointUrl);
+                }
+            };
 
-      service.canAccess = function (state) {
-        if (!state) {
-          return true;
-        }
-        if (state.auth === undefined) {
-          return true;
-        } else if (state.auth.constructor == Array) {
-          if (state.requireAll) {
-            return service.hasAdminRole() || service.hasAllRoles(state.auth);
-          } else {
-            return service.hasAdminRole() || service.hasAnyRole(state.auth);
-          }
-        } else {
-          return state.auth === this.loggedIn
-        }
-      };
+            this.hasRole = function (role) {
+                if (!this.roles) {
+                    return false;
+                }
+                return this.roles.indexOf(role) > -1;
+            };
 
-      service.hasAdminRole = function() {
-        if (!service.roles) {
-          return false;
-        }
-        return service.hasRole(authConf[service.endpoint].adminRole);
-      };
+            this.hasAllRoles = function (roles) {
+                if (!this.roles) {
+                    return false;
+                }
+                for (var i = 0; i < roles.length; i++) {
+                    if (!this.hasRole(roles[i])) {
+                        return false;
+                    }
+                }
+                return true;
+            };
 
-      service.addCustomProperty = function (name, value) {
-        service.customProperties[name] = value;
-      };
+            this.hasAnyRole = function (roles) {
+                if (!this.roles) {
+                    return false;
+                }
+                for (var i = 0; i < roles.length; i++) {
+                    if (this.hasRole(roles[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            };
 
-      function setData(response) {
-        if (response.endpoint) {
-          service.endpoint = response.endpoint;
-        }
+            this.canAccess = function (state) {
+                if (!state) {
+                    return true;
+                }
+                if (state.auth === undefined) {
+                    return true;
+                } else if (state.auth.constructor == Array) {
+                    if (state.requireAll) {
+                        return this.hasAllRoles(state.auth);
+                    } else {
+                        return this.hasAnyRole(state.auth);
+                    }
+                } else {
+                    return state.auth === this.loggedIn
+                }
+            };
 
-        service.username = getPropertyValue(authConf[service.endpoint].usernameProperty, response);
-        service.token = getPropertyValue(authConf[service.endpoint].tokenProperty, response);
-        service.roles = getPropertyValue(authConf[service.endpoint].rolesProperty, response);
-        service.refreshToken = getPropertyValue(authConf[service.endpoint].refreshTokenProperty, response);
-        service.tokenType = getPropertyValue(authConf[service.endpoint].tokenTypeProperty, response);
-        service.loggedIn = !!service.token;
-      }
+            this.addCustomProperty = function (name, value) {
+                service.customProperties[name] = value;
+            };
 
-      function getPropertyValue(property, response) {
-        var propertyValue = response;
-        var propertyParts = property.split('.');
-        propertyParts.forEach(function (propertyPart) {
-          propertyValue = propertyValue ? propertyValue[propertyPart] : null;
-        });
-        return propertyValue;
-      }
+            function setData(response) {
+                service.username = getPropertyValue(authConf.usernameProperty, response);
+                service.token = getPropertyValue(authConf.tokenProperty, response);
+                service.roles = getPropertyValue(authConf.rolesProperty, response);
+                service.refreshToken = getPropertyValue(authConf.refreshTokenProperty, response);
+                service.tokenType = getPropertyValue(authConf.tokenTypeProperty, response);
+                service.loggedIn = !!service.token;
+            }
 
-      return service;
-    }])
-    .directive('authUsername', ['auth', function (auth) {
-      return {
-        restrict: 'AE',
-        template: '{{username}}',
-        link: function(scope) {
-          scope.username = auth.username;
-        }
-      }
-    }])
-    .directive('authCustomProperty', ['auth', function (auth) {
-      return {
-        restrict: 'AE',
-        template: '{{value}}',
-        scope: {
-          property: '@'
-        },
-        link: function(scope, element, attr) {
-          var value = scope.property || attr.authCustomProperty;
-          if (!value) {
-            throw new Error('Property is required!');
-          }
-          scope.value = auth.customProperties[value];
-        }
-      }
-    }])
-    .directive('authLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        link: function (scope, element, attrs) {
-          attrs.ngIf = function () {
-            return auth.loggedIn;
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .directive('authNotLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        link: function (scope, element, attrs) {
-          attrs.ngIf = function () {
-            return !auth.loggedIn;
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .directive('authHasRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        scope: {
-          role: '@'
-        },
-        link: function (scope, element, attrs) {
-          var value = scope.role || attrs.authHasRole;
-          if (!value) {
-            throw new Error('auth-has-role: A Role is required');
-          }
-          attrs.ngIf = function () {
-            return auth.hasAdminRole() || auth.hasRole(value);
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .directive('authHasAdminRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        scope: {},
-        link: function (scope, element, attrs) {
-          attrs.ngIf = function () {
-            return auth.hasAdminRole();
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .directive('authHasAnyRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        scope: {
-          roles: '@'
-        },
-        link: function (scope, element, attrs) {
-          var value = scope.roles ? scope.roles.split(',') : attrs.authHasAnyRole ? attrs.authHasAnyRole.split(',') : null;
-          if (!value) {
-            throw new Error('auth-has-any-role: At least one Role is required');
-          }
-          attrs.ngIf = function () {
-            return auth.hasAdminRole() || auth.hasAnyRole(value);
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .directive('authHasAllRoles', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
-      var ngIf = ngIfDirective[0];
-      return {
-        restrict: 'AE',
-        transclude: ngIf.transclude,
-        priority: ngIf.priority - 1,
-        terminal: ngIf.terminal,
-        scope: {
-          roles: '@'
-        },
-        link: function (scope, element, attrs) {
-          var value = scope.roles ? scope.roles.split(',') : attrs.authHasAllRoles ? attrs.authHasAllRoles.split(',') : null;
-          if (!value) {
-            throw new Error('auth-has-all-roles: At least one Role is required');
-          }
-          attrs.ngIf = function () {
-            return auth.hasAdminRole() || auth.hasAllRoles(value);
-          };
-          ngIf.link.apply(ngIf, arguments);
-        }
-      }
-    }])
-    .run(['$rootScope', '$state', 'auth', 'authConf', 'store', function ($rootScope, $state, auth, authConf, store) {
-      $rootScope.$on('$stateChangeStart', function (event, toState) {
-        if (!auth.canAccess(toState)) {
-          event.preventDefault();
-          authConf[auth.endpoint].functionIfDenied($state, toState, authConf, auth);
-        }
-      });
+            function getPropertyValue(property, response) {
+                var propertyValue = response;
+                var propertyParts = property.split('.');
+                propertyParts.forEach(function (propertyPart) {
+                    propertyValue = propertyValue ? propertyValue[propertyPart] : null;
+                });
+                return propertyValue;
+            }
+        }])
+        .directive('authUsername', ['auth', function (auth) {
+            return {
+                restrict: 'AE',
+                template: '{{username}}',
+                link: function (scope) {
+                    scope.username = auth.username;
+                }
+            }
+        }])
+        .directive('authCustomProperty', ['auth', function (auth) {
+            return {
+                restrict: 'AE',
+                template: '{{value}}',
+                scope: {
+                    property: '@'
+                },
+                link: function (scope, element, attr) {
+                    var value = scope.property || attr.authCustomProperty;
+                    if (!value) {
+                        throw new Error('Property is required!');
+                    }
+                    scope.value = auth.customProperties[value];
+                }
+            }
+        }])
+        .directive('authLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+            var ngIf = ngIfDirective[0];
+            return {
+                restrict: 'AE',
+                transclude: ngIf.transclude,
+                priority: ngIf.priority - 1,
+                terminal: ngIf.terminal,
+                link: function (scope, element, attrs) {
+                    attrs.ngIf = function () {
+                        return auth.loggedIn;
+                    };
+                    ngIf.link.apply(ngIf, arguments);
+                }
+            }
+        }])
+        .directive('authNotLoggedIn', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+            var ngIf = ngIfDirective[0];
+            return {
+                restrict: 'AE',
+                transclude: ngIf.transclude,
+                priority: ngIf.priority - 1,
+                terminal: ngIf.terminal,
+                link: function (scope, element, attrs) {
+                    attrs.ngIf = function () {
+                        return !auth.loggedIn;
+                    };
+                    ngIf.link.apply(ngIf, arguments);
+                }
+            }
+        }])
+        .directive('authHasRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+            var ngIf = ngIfDirective[0];
+            return {
+                restrict: 'AE',
+                transclude: ngIf.transclude,
+                priority: ngIf.priority - 1,
+                terminal: ngIf.terminal,
+                scope: {
+                    role: '@'
+                },
+                link: function (scope, element, attrs) {
+                    var value = scope.role || attrs.authHasRole;
+                    if (!value) {
+                        throw new Error('auth-has-role: A Role is required');
+                    }
+                    attrs.ngIf = function () {
+                        return auth.hasRole(value);
+                    };
+                    ngIf.link.apply(ngIf, arguments);
+                }
+            }
+        }])
+        .directive('authHasAnyRole', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+            var ngIf = ngIfDirective[0];
+            return {
+                restrict: 'AE',
+                transclude: ngIf.transclude,
+                priority: ngIf.priority - 1,
+                terminal: ngIf.terminal,
+                scope: {
+                    roles: '@'
+                },
+                link: function (scope, element, attrs) {
+                    var value = scope.roles ? scope.roles.split(',') : attrs.authHasAnyRole ? attrs.authHasAnyRole.split(',') : null;
+                    if (!value) {
+                        throw new Error('auth-has-any-role: At least one Role is required');
+                    }
+                    attrs.ngIf = function () {
+                        return auth.hasAnyRole(value);
+                    };
+                    ngIf.link.apply(ngIf, arguments);
+                }
+            }
+        }])
+        .directive('authHasAllRoles', ['auth', 'ngIfDirective', function (auth, ngIfDirective) {
+            var ngIf = ngIfDirective[0];
+            return {
+                restrict: 'AE',
+                transclude: ngIf.transclude,
+                priority: ngIf.priority - 1,
+                terminal: ngIf.terminal,
+                scope: {
+                    roles: '@'
+                },
+                link: function (scope, element, attrs) {
+                    var value = scope.roles ? scope.roles.split(',') : attrs.authHasAllRoles ? attrs.authHasAllRoles.split(',') : null;
+                    if (!value) {
+                        throw new Error('auth-has-all-roles: At least one Role is required');
+                    }
+                    attrs.ngIf = function () {
+                        return auth.hasAllRoles(value);
+                    };
+                    ngIf.link.apply(ngIf, arguments);
+                }
+            }
+        }])
+        .run(['$rootScope', '$state', 'auth', 'authConf', 'store', function ($rootScope, $state, auth, authConf, store) {
+            $rootScope.$on('$stateChangeStart', function (event, toState) {
+                if (!auth.canAccess(toState)) {
+                    event.preventDefault();
+                    authConf.functionIfDenied($state, toState);
+                }
+            });
 
-      var response = store.get('auth');
-      if (response) {
-        auth.authenticate(response);
-      }
-    }]);
+            var response = store.get('auth');
+            if (response) {
+                auth.authenticate(response);
+            }
+        }]);
 })();
