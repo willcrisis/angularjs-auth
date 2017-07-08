@@ -1,6 +1,6 @@
 {
   "name": "angularjs-auth",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "An authentication plugin for AngularJS apps",
   "main": "index.js",
   "scripts": {
@@ -25,5 +25,12 @@
     "@uirouter/angularjs": "^1.0.3",
     "angular": "^1.5.5",
     "angular-storage": "0.0.15"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-copy": "^1.0.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^3.0.0",
+    "pump": "^1.0.2"
   }
 }

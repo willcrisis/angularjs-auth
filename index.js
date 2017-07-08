@@ -1,4 +1,2 @@
-require('angular-storage');
-require('./auth');
-
+require('./dist/auth');
 module.exports = 'willcrisis.angularjs-auth';
