@@ -97,7 +97,7 @@ angular.module('willcrisis.angularjs-auth', ['ui.router', 'angular-storage'])
             store.remove('auth');
             authConf[service.endpoint].functionIfLoggedOff();
             if (authConf[service.endpoint].logoutEndpointUrl) {
-                return $http.get(authConf.logoutEndpointUrl);
+                return $http.get(authConf[service.endpoint].logoutEndpointUrl);
             }
         };
 
